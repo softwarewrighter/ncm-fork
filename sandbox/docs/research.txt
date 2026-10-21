@@ -1,0 +1,117 @@
+
+Gemini
+
+New chat
+Library
+Images
+Scheduled
+Customize
+New notebook
+Running NCM on Apple Silicon or RTX 5060
+ROCm vs. CUDA Architecture Comparison
+Low-VRAM LLM Inference Frameworks
+Power Supplies for Hi-Fi Amplifiers
+X_eTaL Blog Post Image Prompts
+Text-to-Image Prompts for Language Tools
+Free STL Viewers for Mac
+Tang Nano 1K Header Installation
+Tang Nano 1K MAX7219 Display Wiring Guide
+FPGA 32-bit Supervisor State etc
+Tang Nano Coin Cell Battery Guide
+Customizing Keycaps for Switches
+Finding Niche ML Hacker Communities
+Guide to Analog Semiconductors and MOSFETs
+Starting a New Strata Conversation
+Obtaining an API Key
+Faroese Translation and Language Notes
+Best Times for Show HN
+Previewing Markdown on macOS
+Comparing GNU APL, BQN, and Uiua
+LicheeRV Nano MicroSD Card Insertion
+Restarting Networking and CRD on Arch Linux
+Finding Low-Noise Technical Communities
+Programming Language Organization Branding
+The Mathematical Roots of APL
+Constitutional Rights and ID Demands
+Adding M.2 to Raspberry Pi 4B
+IBM 2741 Terminal Speed and Operation
+AI-Discovered Lung Disease Drug
+APL\360 vs. APL\1130: Key Differences
+Printing Pi and Tau in APL\360
+Verifying Ray Polivka's Union College Classes
+Learning Raymond Smullyan's Combinator Birds
+Conversation with Gemini
+there is a recent paper on NCM (next concept model?) and a huggingface checkpoint. How can I try this on Apple Silicon or on an RTX5060-16G?
+
+The paper "Next-Concept Modeling: Fast, Parallel Coarse-to-Fine Text Generation" (from Hazy Research at Stanford / Together AI) introduces NCM. It generates text non-autoregressively by using a hierarchical residual VQ-VAE tokenizer (coarse-to-fine sequence of discrete concept codes) and a level-wise transformer generator.   
+Eden AI
+
+Because NCM relies on custom research code and architecture definitions rather than standard AutoModelForCausalLM transformers, you cannot run it directly with standard transformers code; you must clone the official inference codebase.
+
+The model checkpoints (~100M–120M parameters) require under 1 GB of VRAM/RAM, making them extremely easy to run on either hardware option.   
+explainx.ai
+
+Prerequisites & Checkpoints
+Clone the Official Repository:
+
+Bash
+git clone https://github.com/HazyResearch/ncm.git
+cd ncm
+Download Weights from Hugging Face:
+The paper's official weights are hosted on Hugging Face at hazyresearch/ncm-checkpoints. You can download the checkpoints using huggingface_hub:
+
+Bash
+pip install huggingface_hub
+huggingface-cli download hazyresearch/ncm-checkpoints --local-dir ./checkpoints
+Option A: Running on an NVIDIA RTX 5060 (16GB)
+Because the RTX 5060 runs on CUDA with PyTorch, execution is straightforward:
+
+Environment Setup:
+
+Bash
+python3 -m venv ncm-env
+source ncm-env/bin/activate
+pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu121
+pip install -r requirements.txt
+Run Inference:
+Pass the GPU device (cuda:0 or cuda) into the evaluation/generation scripts supplied in the repository:
+
+Bash
+python generate.py \
+  --checkpoint_dir ./checkpoints/xsum_model \
+  --device cuda
+Option B: Running on Apple Silicon (M-Series Mac)
+To run NCM locally on macOS, use PyTorch's Metal Performance Shaders (MPS) backend or execute on CPU.
+
+Environment Setup:
+
+Bash
+python3 -m venv ncm-env
+source ncm-env/bin/activate
+pip install torch torchvision torchaudio
+pip install -r requirements.txt
+Run Inference with MPS Support:
+If the repo allows specifying the device, use mps:
+
+Bash
+python generate.py \
+  --checkpoint_dir ./checkpoints/xsum_model \
+  --device mps
+Gotchas for Apple Silicon:
+
+Custom CUDA Kernels: If the repository defaults to custom CUDA kernels (such as FlashAttention or ThunderKittens kernels developed by Hazy Research), they will fail to compile on macOS. Set fallback environment variables to force standard PyTorch operations:
+
+Bash
+export USE_FLASH_ATTENTION=0
+Unsupported MPS Ops: If a specific VQ-VAE codebook lookup operation raises an MPS non-implemented error, fall back to CPU execution (the model is tiny, so CPU generation will still run near instantly):
+
+Bash
+python generate.py --checkpoint_dir ./checkpoints/xsum_model --device cpu
+
+
+
+
+Your Michael A. Wright chats aren’t used to improve our models. Gemini is AI and can make mistakes. Your privacy & GeminiOpens in a new window
+
+Searching the web
+
